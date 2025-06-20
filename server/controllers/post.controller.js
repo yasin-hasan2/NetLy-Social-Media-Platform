@@ -1,0 +1,359 @@
+import sharp from "sharp";
+import { Post } from "../models/post.model.js";
+import { Comment } from "../models/comment.model.js";
+
+// add a new post
+export const addNewPost = async (req, res) => {
+  try {
+    const caption = req.body;
+    const image = req.file;
+    const authourId = req.id; // Assuming the user ID is stored in req.id by authentication middleware
+
+    // Validate input
+    if (!image) {
+      return res.status(400).json({
+        message: "Image file is required",
+        success: false,
+      });
+    }
+
+    // image upload logic
+    const optimizedImageBuffer = await sharp(
+      image.buffer // Use the buffer from the uploaded file
+    )
+      .resize({
+        width: 800, // Resize to a width of 800px
+        height: 800, // Resize to a height of 600px
+        fit: sharp.fit.cover, // Cover the area while maintaining aspect ratio
+      })
+      .toFormat("jpeg") // Convert to JPEG format
+      .jpeg({ quality: 80 }) // Set JPEG quality to 80%
+      .toBuffer(); // Convert the image to a buffer
+
+    const fileUri = `data:image/jpeg;base64,${optimizedImageBuffer.toString(
+      "base64"
+    )}`; // Convert the buffer to a data URI format
+
+    const cloudResponse = await cloudinary.uploader.upload(fileUri); // Upload the image to Cloudinary or any other cloud storage service
+    const post = await Post.create({
+      caption: caption.caption, // Assuming caption is an object with a 'caption' property
+      image: cloudResponse.secure_url, // Use the secure URL from Cloudinary response
+      author: authourId, // Use the author ID from the request
+    }); // Create a new post with the provided caption, image URL, and author ID
+
+    const user = await User.findById(authourId); // Find the user by ID
+    if (user) {
+      user.post.push(post._id); // Add the post ID to the user's posts array
+      await user.save(); // Save the updated user document
+    } // Save the user document with the new post
+
+    await post.populate({ path: "author", select: "username profilePicture" }); // Populate the author field with username and profile picture
+    return res.status(201).json({
+      message: "Post created successfully",
+      success: true,
+      post, // Return the created post
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: "Internal server error",
+      success: false,
+    });
+    console.log(error); // Log the error for debugging
+  }
+};
+
+// Function to get all posts
+
+export const getAllPosts = async (req, res) => {
+  try {
+    const post = await Post.find()
+      .sort({ createdAt: -1 }) // Sort posts by creation date in descending order
+      .populate({ path: "author", select: "username, profilePicture" }) // Populate the author field with username and profile picture
+      .populate({
+        path: "comments",
+        populate: { path: "author", select: "username, profilePicture" },
+        sort: { createdAt: -1 }, // Sort comments by creation date in descending order
+      }); // Populate comments with author details
+
+    return res.status(200).json({
+      message: "Posts fetched successfully",
+      success: true,
+      posts: post, // Return the fetched posts
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: "Internal server error",
+      success: false,
+    });
+    console.log(error);
+  }
+};
+
+// Function to get a single post by ID
+export const getUserPost = async (req, res) => {
+  try {
+    const authorId = req.id; // Assuming the user ID is stored in req.id by authentication middleware
+    const posts = await Post.find({ author: authorId }) // Find posts by the author ID
+      .sort({ createdAt: -1 })
+      .populate({
+        path: "author",
+        select: "username profilePicture",
+      }) // Populate the author field with username and profile picture
+      .populate({
+        path: "comments",
+        sort: { createdAt: -1 },
+        populate: {
+          path: "author",
+          select: "username profilePicture",
+        },
+      }); // Populate comments with author details
+
+    if (!posts || posts.length === 0) {
+      return res.status(404).json({
+        message: "No posts found for this user",
+        success: false,
+      });
+    }
+    return res.status(200).json({
+      message: "User posts fetched successfully",
+      success: true,
+      posts, // Return the user's posts
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: "Internal server error",
+      success: false,
+    });
+    console.log(error);
+  }
+};
+
+// Function for like  a post
+export const likePost = async (req, res) => {
+  try {
+    const likePostId = req.params.id; // Get the post ID from the request parameters
+    const userId = req.id; // Get the user ID from the request object (assuming it's set by authentication middleware)
+    const post = await Post.findById(likePostId); // Find the post by ID
+    if (!post) {
+      return res.status(404).json({
+        message: "Post not found",
+        success: false,
+      });
+    } // Check if the post exists
+
+    // like logic starts here
+    await post.updateOne({
+      $addToSet: { likes: userId }, // Add the user ID to the likes array if not already present
+    });
+    await post.save(); // Save the updated post document
+
+    // implementing socket io for real time updates notification
+
+    return res.status(200).json({
+      message: "Post liked successfully",
+      success: true,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: "Internal server error",
+      success: false,
+    });
+    console.log(error);
+  }
+};
+
+// Function for  unlike a post
+export const disLikePost = async (req, res) => {
+  try {
+    const likePostId = req.params.id; // Get the post ID from the request parameters
+    const userId = req.id; // Get the user ID from the request object (assuming it's set by authentication middleware)
+    const post = await Post.findById(likePostId); // Find the post by ID
+    if (!post) {
+      return res.status(404).json({
+        message: "Post not found",
+        success: false,
+      });
+    } // Check if the post exists
+
+    // like logic starts here
+    await post.updateOne({
+      $pull: { likes: userId }, // Add the user ID to the likes array if not already present
+    });
+    await post.save(); // Save the updated post document
+
+    // implementing socket io for real time updates notification
+
+    return res.status(200).json({
+      message: "Post disliked successfully",
+      success: true,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: "Internal server error",
+      success: false,
+    });
+    console.log(error);
+  }
+};
+
+// Function to comment a post
+
+export const commentPost = async (req, res) => {
+  try {
+    const postId = req.params.id; // Get the post ID from the request parameters
+    const userId = req.id; // Get the user ID from the request object (assuming
+    const { text } = req.body; // Get the comment text from the request body
+    const post = await Post.findById(postId); // Find the post by ID
+    if (!text)
+      return res.status(400).json({
+        message: "Comment text is required",
+        success: false,
+      });
+
+    const comment = await Comment.create({
+      text: text, // Use the comment text from the request body
+      author: userId, // Use the user ID from the request object
+      post: postId, // Associate the comment with the post ID
+    }).populate({
+      path: "author",
+      select: "username, profilePicture", // Populate the author field with username and profile picture
+    });
+
+    post.comments.push(comment._id); // Add the comment ID to the post's comments array
+    await post.save(); // Save the updated post document
+
+    return res.status(201).json({
+      message: "Comment added successfully",
+      comment, // Return the created comment
+      success: true,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: "Internal server error",
+      success: false,
+    });
+    console.log(error);
+  }
+};
+
+// collect all comments according to post id
+export const getCommentsOfPost = async (req, res) => {
+  try {
+    const postId = req.params.id; // Get the post ID from the request parameters
+    const comments = await Comment.find({ post: postId }) // Find comments associated with the post ID
+      .populate("author", "username, profilePicture"); // Populate the author field with username and profile picture
+
+    if (!comments || comments.length === 0) {
+      return res.status(404).json({
+        message: "No comments found for this post",
+        success: false,
+      });
+    } // Check if there are no comments
+
+    return res.status(200).json({
+      message: "Comments fetched successfully",
+      success: true,
+      comments, // Return the fetched comments
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: "Internal server error",
+      success: false,
+    });
+    console.log(error);
+  }
+};
+
+// Function to delete a post
+
+export const deletePost = async (req, res) => {
+  try {
+    const postId = req.params.id; // Get the post ID from the request parameters
+    const userId = req.id; // Get the user ID from the request object (assuming
+    const post = await Post.findById(postId); // Find the post by ID
+    if (!post) {
+      return res.status(404).json({
+        message: "Post not found",
+        success: false,
+      });
+    } // Check if the post exists
+
+    // Check if the user is the author of the post
+    if (post.author.toString() !== userId) {
+      return res.status(403).json({
+        message: "You are not authorized to delete this post",
+        success: false,
+      });
+    } // Ensure that only the author can delete the post
+
+    // Delete the post
+    await Post.findByIdAndDelete(postId); // Delete the post from the database
+
+    // Remove the post ID from the author's posts array
+    let user = await User.findById(userId); // Find the user by ID
+    user.posts = user.posts.filter((id) => id.toString() !== postId); // Filter out the deleted post ID
+    await user.save(); // Save the updated user document
+
+    // delete all comments associated with the post
+    await Comment.deleteMany({ post: postId }); // Delete all comments associated with the post
+
+    return res.status(200).json({
+      message: "Post deleted successfully",
+      success: true,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: "Internal server error",
+      success: false,
+    });
+    console.log(error);
+  }
+};
+
+// Function to bookmark a post
+export const bookmarkPost = async (req, res) => {
+  try {
+    const postId = req.params.id; // Get the post ID from the request parameters
+    const userId = req.id; // Get the user ID from the request object (assuming
+    const post = await Post.findById(postId); // Find the post by ID
+
+    if (!post) {
+      return res.status(404).json({
+        message: "Post not found",
+        success: false,
+      });
+    } // Check if the post exists
+
+    const user = await User.findById(userId); // Find the user by ID
+
+    // Check if the post is already bookmarked
+    if (user.bookmarks.includes(post._Id)) {
+      // If the post is already bookmarked, remove it from bookmarks
+      await user.updateOne({
+        $pull: { bookmarks: post._id }, // Remove the post ID from the bookmarks array
+      });
+      await user.save(); // Save the updated user document
+      return res.status(200).json({
+        type: "unsaved",
+        message: "Post removed from bookmarks",
+        success: true,
+      });
+    } else {
+      await user.updateOne({
+        $addToSet: { bookmarks: post._id }, // Add the post ID to the bookmarks array if not already present
+      });
+      await user.save(); // Save the updated user document
+      return res.status(200).json({
+        type: "saved",
+        message: "Post bookmarked successfully",
+        success: true,
+      });
+    }
+  } catch (error) {
+    return res.status(500).json({
+      message: "Internal server error",
+      success: false,
+    });
+    console.log(error);
+  }
+};
