@@ -215,9 +215,11 @@ export const commentPost = async (req, res) => {
       text: text, // Use the comment text from the request body
       author: userId, // Use the user ID from the request object
       post: postId, // Associate the comment with the post ID
-    }).populate({
+    });
+
+    await comment.populate({
       path: "author",
-      select: "username, profilePicture", // Populate the author field with username and profile picture
+      select: "username profilePicture", // Populate the author field with username and profile picture
     });
 
     post.comments.push(comment._id); // Add the comment ID to the post's comments array
@@ -242,7 +244,7 @@ export const getCommentsOfPost = async (req, res) => {
   try {
     const postId = req.params.id; // Get the post ID from the request parameters
     const comments = await Comment.find({ post: postId }) // Find comments associated with the post ID
-      .populate("author", "username, profilePicture"); // Populate the author field with username and profile picture
+      .populate("author", "username profilePicture"); // Populate the author field with username and profile picture
 
     if (!comments || comments.length === 0) {
       return res.status(404).json({

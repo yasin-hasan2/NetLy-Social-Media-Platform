@@ -18,12 +18,14 @@ import { useDispatch, useSelector } from "react-redux";
 import { setAuthUser } from "@/redux/authSlice";
 import { useState } from "react";
 import CreatePost from "./CreatePost";
+import { setPosts, setSelectedPost } from "@/redux/postSlice";
 // import store from "@/redux/store";
 // import { useNavigate } from "react-router-dom";
 
 const LeftSidebar = () => {
   //   const navigate = useNavigate();
   const { user } = useSelector((store) => store.auth);
+  console.log(user.profilePicture, user);
 
   const dispatch = useDispatch();
   const [open, setOpen] = useState(false);
@@ -34,8 +36,10 @@ const LeftSidebar = () => {
         withCredentials: true,
       });
       if (res.data.success) {
-        toast.success(res.data.message);
         dispatch(setAuthUser(null));
+        dispatch(setSelectedPost(null));
+        dispatch(setPosts([]));
+        toast.success(res.data.message);
         // Optionally, redirect to login or home page
         window.location.href = "/login"; // Redirect to login page
         // navigate("/login");

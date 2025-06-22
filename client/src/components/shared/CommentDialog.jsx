@@ -1,12 +1,27 @@
-import React from "react";
 import { Dialog, DialogContent, DialogTrigger } from "../ui/dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Link } from "react-router-dom";
 import { MoreHorizontal } from "lucide-react";
 import { Button } from "../ui/button";
+import { useDispatch, useSelector } from "react-redux";
+import Comment from "./Comment";
+import axios from "axios";
+import { useEffect, useState } from "react";
+import { setPosts } from "@/redux/postSlice";
+import { toast } from "sonner";
 
 const CommentDialog = ({ open, setOpen }) => {
-  const [text, setText] = React.useState("");
+  const [text, setText] = useState("");
+  const { selectedPost, posts } = useSelector((store) => store.post);
+  // const [comment, setComment] = useState(selectedPost?.comments);
+  const [comment, setComment] = useState([]);
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    if (selectedPost) {
+      setComment(selectedPost.comments);
+    }
+  }, [selectedPost]);
 
   const changeEventHandler = (e) => {
     const inputText = e.target.value;
@@ -18,11 +33,49 @@ const CommentDialog = ({ open, setOpen }) => {
     }
   };
 
+  // const sentMessageHandler = async () => {
+  //   alert("Comment sent: " + text);
+  //   // Here you would typically send the comment to your backend
+  //   console.log("Comment sent:", text);
+  //   setText(""); // Reset the input field after sending the comment
+  // };
+
   const sentMessageHandler = async () => {
-    alert("Comment sent: " + text);
-    // Here you would typically send the comment to your backend
-    console.log("Comment sent:", text);
-    setText(""); // Reset the input field after sending the comment
+    try {
+      const res = await axios.post(
+        `http://localhost:5000/api/v1/post/${selectedPost._id}/comment`,
+        { text },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+          withCredentials: true,
+        }
+      );
+
+      console.log(res.data);
+      if (res.data.success) {
+        const updatedCommentData = [...comment, res.data.comment];
+        setComment(updatedCommentData);
+        const updatedPostData = posts.map((p) =>
+          p._id === selectedPost._id
+            ? { ...p, comments: updatedCommentData }
+            : p
+        );
+
+        dispatch(setPosts(updatedPostData));
+        toast.success(res.data.message);
+        setText(""); // Clear the input field after posting the comment
+        // Optionally, you can update the comments in the post state or Redux store
+        // For example, you might want to fetch the updated post data or update it directly
+      }
+    } catch (error) {
+      console.error("Error handling comment:", error);
+      toast.error(
+        error.response?.data?.message ||
+          "An error occurred while handling the comment."
+      );
+    }
   };
 
   return (
@@ -30,13 +83,15 @@ const CommentDialog = ({ open, setOpen }) => {
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent
           onInteractOutside={() => setOpen(false)}
-          className={"max-w-5xl p-0 flex flex-col"}
+          className={
+            "lg:max-w-[50rem] border border-amber-300 p-0 flex flex-col"
+          }
         >
-          <section className="flex  flex-1 gap-2">
-            <div className="w-1/2">
+          <div className="flex    flex-1 gap-2">
+            <div className="w-1/2  ">
               <img
                 className="w-full h-full object-cover rounded-l-lg"
-                src="https://images.pexels.com/photos/2528118/pexels-photo-2528118.jpeg"
+                src={selectedPost?.image}
                 alt="post_image"
               />
             </div>
@@ -45,12 +100,17 @@ const CommentDialog = ({ open, setOpen }) => {
                 <div className="flex items-center gap-3">
                   <Link>
                     <Avatar>
-                      <AvatarImage></AvatarImage>
+                      <AvatarImage
+                        src={selectedPost?.author?.profilePicture}
+                        alt="author_img"
+                      ></AvatarImage>
                       <AvatarFallback>CN</AvatarFallback>
                     </Avatar>
                   </Link>
                   <div>
-                    <Link className="text-sm font-semibold">username</Link>
+                    <Link className="text-sm font-semibold">
+                      {selectedPost?.author?.username}
+                    </Link>
 
                     <p className="text-xs text-gray-500">2 hours ago</p>
                   </div>
@@ -74,7 +134,9 @@ const CommentDialog = ({ open, setOpen }) => {
               </div>
               <hr />
               <div className="flex-1 overflow-y-auto max-h-96 p-4">
-                comments section
+                {comment?.map((comment) => (
+                  <Comment key={comment._id} comment={comment}></Comment>
+                ))}
               </div>
               <div className="p-4">
                 <div className="flex items-center gap-2">
@@ -83,11 +145,11 @@ const CommentDialog = ({ open, setOpen }) => {
                     value={text}
                     onChange={changeEventHandler}
                     placeholder="Add a comment ..."
-                    className="w-full outline-none border border-gray-300 p-2 rounded"
+                    className="w-full outline-none border text-sm border-gray-300 p-2 rounded"
                   />
                   <Button
                     disabled={!text.trim()}
-                    onclick={sentMessageHandler}
+                    onClick={sentMessageHandler}
                     variant={"outline"}
                   >
                     Send
@@ -95,7 +157,7 @@ const CommentDialog = ({ open, setOpen }) => {
                 </div>
               </div>
             </div>
-          </section>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

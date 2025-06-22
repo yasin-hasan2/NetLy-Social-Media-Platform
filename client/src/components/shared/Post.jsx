@@ -9,16 +9,20 @@ import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "sonner";
 import axios from "axios";
-import { setPosts } from "@/redux/postSlice";
+import { setPosts, setSelectedPost } from "@/redux/postSlice";
+import { Badge } from "../ui/badge";
 
 const Post = ({ post }) => {
   const [text, setText] = useState("");
+  // console.log(text);
   const [open, setOpen] = useState(false);
   const { user } = useSelector((store) => store.auth);
   const { posts } = useSelector((store) => store.post);
   const [liked, setLiked] = useState(post.likes?.includes(user?._id) || false);
   const [showFullCaption, setShowFullCaption] = useState(false);
   const [postLike, setPostLike] = useState(post.likes.length);
+  const [comment, setComment] = useState(post.comments);
+  // console.log("comment:", comment);
 
   const dispatch = useDispatch();
   // const [deleteOpen, setDeleteOpen] = useState(false);
@@ -71,24 +75,42 @@ const Post = ({ post }) => {
   };
 
   // Function to handle the comment button click
-  const commentHandler = () => {
+  const commentHandler = async () => {
     try {
-      const res = axios.post(`http://localhost:5000/api/v1/post/${post._id}/comment`, {text}, {
-        headers:{
-          "Content-Type": "application/json",
-        },
-        withCredentials: true,
-      })
+      const res = await axios.post(
+        `http://localhost:5000/api/v1/post/${post._id}/comment`,
+        { text },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+          withCredentials: true,
+        }
+      );
 
+      // console.log(res.data);
+      if (res.data.success) {
+        const updatedCommentData = [...comment, res.data.comment];
+        setComment(updatedCommentData);
+        const updatedPostData = posts.map((p) =>
+          p._id === post._id ? { ...p, comments: updatedCommentData } : p
+        );
+
+        dispatch(setPosts(updatedPostData));
+        toast.success(res.data.message);
+        setText(""); // Clear the input field after posting the comment
+        // Optionally, you can update the comments in the post state or Redux store
+        // For example, you might want to fetch the updated post data or update it directly
+      }
     } catch (error) {
       console.error("Error handling comment:", error);
       toast.error(
         error.response?.data?.message ||
           "An error occurred while handling the comment."
       );
-      
     }
-  }
+  };
+  // console.log("comment:", commentHandler);
 
   // delete post handler
 
@@ -140,7 +162,12 @@ const Post = ({ post }) => {
             ></AvatarImage>
             <AvatarFallback>CN</AvatarFallback>
           </Avatar>
-          <h1>{post.author?.username}</h1>
+          <div className="flex items-center gap-3">
+            <h1>{post.author?.username}</h1>
+            {user?._id === post.author._id && (
+              <Badge variant={"secondary"}>Author</Badge>
+            )}
+          </div>
         </div>
         <Dialog>
           <DialogTrigger asChild>
@@ -210,12 +237,21 @@ const Post = ({ post }) => {
           )}
 
           <MessageCircle
-            onClick={() => setOpen(true)}
-            className={"cursor-pointer hover:text-gray-600"}
+            size={"22px"}
+            onClick={() => {
+              dispatch(setSelectedPost(post));
+              setOpen(true);
+            }}
+            className={"cursor-pointer text-gray-600 hover:text-[#FBCF28]"}
           />
-          <Send className={"cursor-pointer hover:text-gray-600"} />
+          <Send
+            size={"22px"}
+            className={"cursor-pointer text-gray-600 hover:text-[#FBCF28]"}
+          />
         </div>
-        <Bookmark className={"cursor-pointer hover:text-gray-600"} />
+        <Bookmark
+          className={"cursor-pointer text-gray-600 hover:text-[#FBCF28]"}
+        />
       </div>
       <span className="font-medium block mb-2">{postLike} Likes </span>
       <p>
@@ -238,7 +274,18 @@ const Post = ({ post }) => {
           </button>
         )}
       </p>
-      <span onClick={() => setOpen(true)}>View all 10 comments</span>
+      {comment.length > 0 && (
+        <span
+          onClick={() => {
+            dispatch(setSelectedPost(post));
+            setOpen(true);
+          }}
+          className="cursor-pointer"
+        >
+          View all {comment.length} comments
+        </span>
+      )}
+
       <CommentDialog open={open} setOpen={setOpen} />
       <div className="flex items-center gap-2">
         <input
@@ -248,7 +295,14 @@ const Post = ({ post }) => {
           onChange={changeEventHandler}
           className={"outline-none text-sm w-full my-2"}
         />
-        {text && <span className="text-[#FCCF28]">Post</span>}
+        {text && (
+          <span
+            onClick={commentHandler}
+            className="text-[#FCCF28] cursor-pointer font-semibold"
+          >
+            Post
+          </span>
+        )}
       </div>
     </div>
   );
