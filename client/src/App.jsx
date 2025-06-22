@@ -1,11 +1,44 @@
-import Login from "./components/Login";
-import Signup from "./components/Signup";
-import { Button } from "./components/ui/button";
+import MainLayout from "./layout/MainLayout";
+
+import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import Home from "./pages/home/Home";
+import Signup from "./pages/login&signup/Signup";
+import Login from "./pages/login&signup/Login";
+import Profile from "./pages/users/Profile";
+// =========================================
+// import Particles from "./components/Particles";
+// import Threads from "./components/Threads";
+// ==========================================
+
+const browserRouter = createBrowserRouter([
+  {
+    path: "/",
+    element: <MainLayout />,
+    children: [
+      {
+        path: "/",
+        element: <Home />,
+      },
+      {
+        path: "/profile",
+        element: <Profile />,
+      },
+    ],
+  },
+  {
+    path: "/signup",
+    element: <Signup />,
+  },
+  {
+    path: "/login",
+    element: <Login />,
+  },
+]);
 
 function App() {
   return (
     <>
-      <Signup />
+      <RouterProvider router={browserRouter} />
     </>
   );
 }

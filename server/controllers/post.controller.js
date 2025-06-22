@@ -1,19 +1,24 @@
 import sharp from "sharp";
 import { Post } from "../models/post.model.js";
 import { Comment } from "../models/comment.model.js";
+import { User } from "../models/user.model.js";
+import cloudinary from "../utils/cloudinary.js";
 
 // add a new post
 export const addNewPost = async (req, res) => {
   try {
-    const caption = req.body;
+    const { caption } = req.body;
     const image = req.file;
-    const authourId = req.id; // Assuming the user ID is stored in req.id by authentication middleware
+    const authorId = req.id; // Assuming the user ID is stored in req.id by authentication middleware
+
+    console.log("Author ID:", authorId); // Log the author ID for debugging
+    console.log("Caption:", caption); // Log the caption for debugging
+    console.log("Image:", image); // Log the image file for debugging
 
     // Validate input
     if (!image) {
       return res.status(400).json({
         message: "Image file is required",
-        success: false,
       });
     }
 
@@ -24,10 +29,9 @@ export const addNewPost = async (req, res) => {
       .resize({
         width: 800, // Resize to a width of 800px
         height: 800, // Resize to a height of 600px
-        fit: sharp.fit.cover, // Cover the area while maintaining aspect ratio
+        fit: "inside", // Cover the area while maintaining aspect ratio
       })
-      .toFormat("jpeg") // Convert to JPEG format
-      .jpeg({ quality: 80 }) // Set JPEG quality to 80%
+      .toFormat("jpeg", { quality: 80 }) // Set JPEG quality to 80%
       .toBuffer(); // Convert the image to a buffer
 
     const fileUri = `data:image/jpeg;base64,${optimizedImageBuffer.toString(
@@ -36,31 +40,28 @@ export const addNewPost = async (req, res) => {
 
     const cloudResponse = await cloudinary.uploader.upload(fileUri); // Upload the image to Cloudinary or any other cloud storage service
     const post = await Post.create({
-      caption: caption.caption, // Assuming caption is an object with a 'caption' property
+      caption, // Assuming caption is an object with a 'caption' property
       image: cloudResponse.secure_url, // Use the secure URL from Cloudinary response
-      author: authourId, // Use the author ID from the request
+      author: authorId, // Use the author ID from the request
     }); // Create a new post with the provided caption, image URL, and author ID
 
-    const user = await User.findById(authourId); // Find the user by ID
+    const user = await User.findById(authorId); // Find the user by ID
     if (user) {
-      user.post.push(post._id); // Add the post ID to the user's posts array
+      user.posts.push(post._id); // Add the post ID to the user's posts array
       await user.save(); // Save the updated user document
     } // Save the user document with the new post
 
-    await post.populate({ path: "author", select: "username profilePicture" }); // Populate the author field with username and profile picture
+    await post.populate({ path: "author", select: "-password" }); // Populate the author field with username and profile picture
     return res.status(201).json({
       message: "Post created successfully",
-      success: true,
       post, // Return the created post
+      success: true,
     });
   } catch (error) {
-    return res.status(500).json({
-      message: "Internal server error",
-      success: false,
-    });
-    console.log(error); // Log the error for debugging
+    console.log("addPost error ", error); // Log the error for debugging
   }
 };
+// console.log("Post controller loaded successfully", addNewPost);
 
 // Function to get all posts
 
@@ -68,10 +69,10 @@ export const getAllPosts = async (req, res) => {
   try {
     const post = await Post.find()
       .sort({ createdAt: -1 }) // Sort posts by creation date in descending order
-      .populate({ path: "author", select: "username, profilePicture" }) // Populate the author field with username and profile picture
+      .populate({ path: "author", select: "username profilePicture" }) // Populate the author field with username and profile picture
       .populate({
         path: "comments",
-        populate: { path: "author", select: "username, profilePicture" },
+        populate: { path: "author", select: "username profilePicture" },
         sort: { createdAt: -1 }, // Sort comments by creation date in descending order
       }); // Populate comments with author details
 
