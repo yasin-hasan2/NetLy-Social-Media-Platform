@@ -25,7 +25,7 @@ import { setPosts, setSelectedPost } from "@/redux/postSlice";
 const LeftSidebar = () => {
   //   const navigate = useNavigate();
   const { user } = useSelector((store) => store.auth);
-  console.log(user.profilePicture, user);
+  // console.log(user.profilePicture, user);
 
   const dispatch = useDispatch();
   const [open, setOpen] = useState(false);

@@ -14,7 +14,7 @@ const useGetAllPost = () => {
 
         if (res.data.success) {
           dispatch(setPosts(res.data.posts));
-          console.log("Posts fetched successfully:", res.data.posts);
+          // console.log("Posts fetched successfully:", res.data.posts);
         }
       } catch (error) {
         console.error("Error fetching posts:", error);

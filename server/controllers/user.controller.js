@@ -239,10 +239,11 @@ export const getSuggestedUsers = async (req, res) => {
       _id: { $ne: req.id }, // Exclude the current user
     }).select("-password"); // Exclude password from the response
     // .limit(10); // Limit to 10 suggested users
+    // console.log(suggestedUsers);
     if (!suggestedUsers) {
       return res.status(400).json({
         message: "Currently do not have users to suggest",
-        success: false,
+        // success: false,
       });
     }
     // Uncomment the following lines if you want to return a message when no suggested users are found
@@ -253,8 +254,8 @@ export const getSuggestedUsers = async (req, res) => {
     // }
 
     return res.status(200).json({
-      user: suggestedUsers,
       success: true,
+      user: suggestedUsers,
     });
   } catch (error) {
     console.log(error);

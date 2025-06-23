@@ -75,7 +75,7 @@ const CreatePost = ({ open, setOpen }) => {
     }
   };
 
-  console.log("User in CreatePost:", user);
+  // console.log("User in CreatePost:", user);
 
   return (
     <div>
