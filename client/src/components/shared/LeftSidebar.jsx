@@ -20,10 +20,10 @@ import { useState } from "react";
 import CreatePost from "./CreatePost";
 import { setPosts, setSelectedPost } from "@/redux/postSlice";
 // import store from "@/redux/store";
-// import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 const LeftSidebar = () => {
-  //   const navigate = useNavigate();
+  const navigate = useNavigate();
   const { user } = useSelector((store) => store.auth);
   // console.log(user.profilePicture, user);
 
@@ -104,6 +104,10 @@ const LeftSidebar = () => {
       toast.success("Logged out successfully");
     } else if (textType === "Create") {
       setOpen(true);
+    } else if (textType === "Profile") {
+      navigate(`/profile/${user?._id}`);
+    } else if (textType === "Home") {
+      navigate("/");
     }
     // else {
     //   // Handle other sidebar item clicks
