@@ -23,7 +23,8 @@
     "mongoose": "^8.15.2",
     "multer": "^2.0.1",
     "nodemon": "^3.1.10",
-    "sharp": "^0.34.2"
+    "sharp": "^0.34.2",
+    "socket.io": "^4.8.1"
   },
   "devDependencies": {
     "prettier": "3.5.3"

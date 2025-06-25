@@ -8,9 +8,11 @@ import userRoute from "./routes/user.route.js"; // Import user routes
 import postRoute from "./routes/post.route.js";
 import messageRoute from "./routes/message.route.js";
 
+import { app, server } from "./socket/socket.js";
+
 dotenv.config({}); // Load environment variables from .env file
 
-const app = express(); //
+// const app = express(); //
 const PORT = process.env.PORT || 5000; // Default port if not specified in .env
 // Import database connection
 
@@ -48,7 +50,7 @@ app.use("/api/v1/user", userRoute);
 app.use("/api/v1/post", postRoute); // Import post routes
 app.use("/api/v1/message", messageRoute); // Import message routes
 
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   connectDB(); // Connect to the database
   console.log(`🚀 Server is running on port ${PORT}`);
 });

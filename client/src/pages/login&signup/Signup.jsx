@@ -1,12 +1,13 @@
 import { Label } from "@radix-ui/react-label";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import axios from "axios";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Link, useNavigate } from "react-router-dom";
 import { Loader2 } from "lucide-react";
+import { useSelector } from "react-redux";
 
 const Signup = () => {
   // This component renders a signup form with fields for username, email, and password.
@@ -18,6 +19,7 @@ const Signup = () => {
     password: "",
   });
   const [loading, setLoading] = useState(false);
+  const { user } = useSelector((store) => store.auth);
   const navigate = useNavigate();
   const changeHandler = (e) => {
     // This function updates the state with the input values from the form fields.
@@ -61,6 +63,12 @@ const Signup = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (user) {
+      navigate("/");
+    }
+  }, []);
 
   return (
     <div className="flex items-center justify-center   h-screen ">

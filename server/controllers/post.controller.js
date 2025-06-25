@@ -3,6 +3,7 @@ import { Post } from "../models/post.model.js";
 import { Comment } from "../models/comment.model.js";
 import { User } from "../models/user.model.js";
 import cloudinary from "../utils/cloudinary.js";
+import { getReceiverSocketId, io } from "../socket/socket.js";
 
 // add a new post
 export const addNewPost = async (req, res) => {
@@ -132,68 +133,90 @@ export const getUserPost = async (req, res) => {
 // Function for like  a post
 export const likePost = async (req, res) => {
   try {
-    const likePostId = req.params.id; // Get the post ID from the request parameters
-    const userId = req.id; // Get the user ID from the request object (assuming it's set by authentication middleware)
-    const post = await Post.findById(likePostId); // Find the post by ID
+    const likePostId = req.params.id;
+    const userId = req.id;
+    const post = await Post.findById(likePostId);
     if (!post) {
       return res.status(404).json({
         message: "Post not found",
         success: false,
       });
-    } // Check if the post exists
+    }
 
-    // like logic starts here
     await post.updateOne({
-      $addToSet: { likes: userId }, // Add the user ID to the likes array if not already present
+      $addToSet: { likes: userId },
     });
-    await post.save(); // Save the updated post document
+    await post.save();
 
-    // implementing socket io for real time updates notification
+    const user = await User.findById(userId).select("username profilePicture");
+    const postOwnerId = post.author.toString();
+    if (postOwnerId !== userId) {
+      const notification = {
+        type: "like",
+        userId,
+        userDetails: user,
+        postId: likePostId, // ✅ FIXED
+        message: "Your post was liked",
+      };
+      const postOwnerSocketId = getReceiverSocketId(postOwnerId);
+      io.to(postOwnerSocketId).emit("notification", notification);
+    }
 
     return res.status(200).json({
       message: "Post liked successfully",
       success: true,
     });
   } catch (error) {
+    console.error("Error in likePost:", error);
     return res.status(500).json({
       message: "Internal server error",
       success: false,
     });
-    console.log(error);
   }
 };
 
 // Function for  unlike a post
 export const disLikePost = async (req, res) => {
   try {
-    const likePostId = req.params.id; // Get the post ID from the request parameters
-    const userId = req.id; // Get the user ID from the request object (assuming it's set by authentication middleware)
-    const post = await Post.findById(likePostId); // Find the post by ID
+    const likePostId = req.params.id;
+    const userId = req.id;
+    const post = await Post.findById(likePostId);
     if (!post) {
       return res.status(404).json({
         message: "Post not found",
         success: false,
       });
-    } // Check if the post exists
+    }
 
-    // like logic starts here
     await post.updateOne({
-      $pull: { likes: userId }, // Add the user ID to the likes array if not already present
+      $pull: { likes: userId },
     });
-    await post.save(); // Save the updated post document
+    await post.save();
 
-    // implementing socket io for real time updates notification
+    const user = await User.findById(userId).select("username profilePicture");
+    const postOwnerId = post.author.toString();
+    if (postOwnerId !== userId) {
+      const notification = {
+        type: "dislike",
+        userId,
+        userDetails: user,
+        postId: likePostId, // ✅ FIXED
+        message: "Your post was disliked",
+      };
+      const postOwnerSocketId = getReceiverSocketId(postOwnerId);
+      io.to(postOwnerSocketId).emit("notification", notification);
+    }
 
     return res.status(200).json({
       message: "Post disliked successfully",
       success: true,
     });
   } catch (error) {
+    console.error("Error in disLikePost:", error);
     return res.status(500).json({
       message: "Internal server error",
       success: false,
     });
-    console.log(error);
   }
 };
 
@@ -330,7 +353,7 @@ export const bookmarkPost = async (req, res) => {
     const user = await User.findById(userId); // Find the user by ID
 
     // Check if the post is already bookmarked
-    if (user.bookmarks.includes(post._Id)) {
+    if (user.bookmarks.includes(post._id)) {
       // If the post is already bookmarked, remove it from bookmarks
       await user.updateOne({
         $pull: { bookmarks: post._id }, // Remove the post ID from the bookmarks array

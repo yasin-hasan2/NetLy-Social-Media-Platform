@@ -47,6 +47,7 @@ const Post = ({ post }) => {
           withCredentials: true,
         }
       );
+      console.log(res.data);
       if (res.data.success) {
         const updatedLikes = liked ? postLike - 1 : postLike + 1;
         setPostLike(updatedLikes);
@@ -144,6 +145,24 @@ const Post = ({ post }) => {
     }
   };
 
+  const bookmarkHandler = async () => {
+    try {
+      const res = await axios.get(
+        `http://localhost:5000/api/v1/post/${post._id}/bookmark`,
+        {
+          withCredentials: true,
+        }
+      );
+
+      console.log(res.data);
+      if (res.data.success) {
+        toast.success(res.data.message);
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   // Caption logic
   const captionWords = post.caption ? post.caption.split(/\s+/) : [];
   const isLongCaption = captionWords.length > 20;
@@ -175,12 +194,15 @@ const Post = ({ post }) => {
             <MoreHorizontal className="cursor-pointer" />
           </DialogTrigger>
           <DialogContent className="flex flex-col items-center text-sm text-center">
-            <Button
-              variant={"ghost"}
-              className={"cursor-pointer w-fit text-[#FCCF28] font-bold"}
-            >
-              Unfollow
-            </Button>
+            {post?.author?._id !== user?._id && (
+              <Button
+                variant={"ghost"}
+                className={"cursor-pointer w-fit text-[#FCCF28] font-bold"}
+              >
+                Unfollow
+              </Button>
+            )}
+
             <Button variant={"ghost"} className={"cursor-pointer w-fit  "}>
               Add to favorites
             </Button>
@@ -251,6 +273,7 @@ const Post = ({ post }) => {
           />
         </div>
         <Bookmark
+          onClick={bookmarkHandler}
           className={"cursor-pointer text-gray-600 hover:text-[#FBCF28]"}
         />
       </div>
