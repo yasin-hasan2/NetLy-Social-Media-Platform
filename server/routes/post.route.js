@@ -19,7 +19,7 @@ router
   .route("/addPost")
   .post(isAuthenticated, upload.single("image"), addNewPost);
 router.route("/all").get(isAuthenticated, getAllPosts);
-router.route("/userPost/all").get(isAuthenticated, getUserPost);
+router.route("/userPost/all").get(getUserPost);
 router.route("/:id/like").get(isAuthenticated, likePost);
 router.route("/:id/dislike").get(isAuthenticated, disLikePost);
 router.route("/:id/comment").post(isAuthenticated, commentPost);
