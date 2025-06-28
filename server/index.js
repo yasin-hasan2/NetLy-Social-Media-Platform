@@ -29,20 +29,17 @@ app.use(cookieParser());
 app.use(urlencoded({ extended: true }));
 
 // Import routes
+
 const corsOptions = {
-  //   origin: "http://localhost:3000", // Replace with your frontend URL
-  origin: "http://localhost:5173", // Replace with your frontend URL
-  credentials: true, // Allow cookies to be sent
-  //   methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
-  //   allowedHeaders: "Content-Type, Authorization",
+  origin: ["http://localhost:5173", "http://localhost:5174"],
+  credentials: true,
 };
 
-// CORS middleware
 app.use(cors(corsOptions));
 
 // Import all routes
 app.use("/api/v1/user", userRoute);
-("http://localhost:5000/api/v1/user/register"); // Example endpoint for user registration
+// ("https://netly-social-media-platform-g76x.vercel.app/api/v1/user/register"); // Example endpoint for user registration
 // This sets up the user-related routes under the /api/v1/user path
 // The userRoute handles user registration, login, profile editing, etc.
 //  Start the server and connect to the database
