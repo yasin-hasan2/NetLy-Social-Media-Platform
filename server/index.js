@@ -31,7 +31,7 @@ app.use(urlencoded({ extended: true }));
 // Import routes
 
 const corsOptions = {
-  origin: ["https://netly-social-media-platform.vercel.app"],
+  origin: ["http://localhost:5173", "http://localhost:5174"],
   credentials: true,
 };
 
