@@ -1,7 +1,7 @@
 import Feed from "@/components/feed/Feed";
 import RightSidebar from "@/components/shared/RightSidebar";
 import useGetAllPost from "@/hooks/useGetAllPost";
-import useGetSuggestedUsers from "@/hooks/useGetSuggestedusers";
+import useGetSuggestedUsers from "@/hooks/useGetSuggestedUsers";
 import React from "react";
 import { Outlet } from "react-router-dom";
 
