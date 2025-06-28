@@ -42,7 +42,7 @@ const Post = ({ post }) => {
     try {
       const action = liked ? "dislike" : "like";
       const res = await axios.get(
-        `https://netly-social-media-platform-g76x.vercel.app/api/v1/post/${post._id}/${action}`,
+        `http://localhost:5000/api/v1/post/${post._id}/${action}`,
         {
           withCredentials: true,
         }
@@ -80,7 +80,7 @@ const Post = ({ post }) => {
   const commentHandler = async () => {
     try {
       const res = await axios.post(
-        `https://netly-social-media-platform-g76x.vercel.app/api/v1/post/${post._id}/comment`,
+        `http://localhost:5000/api/v1/post/${post._id}/comment`,
         { text },
         {
           headers: {
@@ -119,7 +119,7 @@ const Post = ({ post }) => {
   const deletePostHandler = async () => {
     try {
       const res = await axios.delete(
-        `https://netly-social-media-platform-g76x.vercel.app/api/v1/post/delete/${post._id}`,
+        `http://localhost:5000/api/v1/post/delete/${post._id}`,
         {
           withCredentials: true,
         }
@@ -148,7 +148,7 @@ const Post = ({ post }) => {
   const bookmarkHandler = async () => {
     try {
       const res = await axios.get(
-        `https://netly-social-media-platform-g76x.vercel.app/api/v1/post/${post._id}/bookmark`,
+        `http://localhost:5000/api/v1/post/${post._id}/bookmark`,
         {
           withCredentials: true,
         }

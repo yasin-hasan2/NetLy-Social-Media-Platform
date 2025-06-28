@@ -38,7 +38,7 @@ const Login = () => {
       setLoading(true);
       // Make a POST request to the backend API for user registration
       const res = await axios.post(
-        "https://netly-social-media-platform-g76x.vercel.app/api/v1/user/login",
+        "http://localhost:5000/api/v1/user/login",
         input,
         {
           headers: {

@@ -11,7 +11,7 @@ const useGetUserProfile = (userId) => {
     const fetchUserProfile = async () => {
       try {
         const res = await axios.get(
-          `https://netly-social-media-platform-g76x.vercel.app/api/v1/user/${userId}/profile`,
+          `http://localhost:5000/api/v1/user/${userId}/profile`,
           {
             withCredentials: true,
           }

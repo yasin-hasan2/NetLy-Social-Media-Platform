@@ -43,7 +43,7 @@ const CommentDialog = ({ open, setOpen }) => {
   const sentMessageHandler = async () => {
     try {
       const res = await axios.post(
-        `https://netly-social-media-platform-g76x.vercel.app/api/v1/post/${selectedPost._id}/comment`,
+        `http://localhost:5000/api/v1/post/${selectedPost._id}/comment`,
         { text },
         {
           headers: {
