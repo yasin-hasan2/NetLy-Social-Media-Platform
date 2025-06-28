@@ -45,7 +45,7 @@ const CreatePost = ({ open, setOpen }) => {
     try {
       setLoading(true);
       const res = await axios.post(
-        "http://localhost:5000/api/v1/post/addPost",
+        "https://netly-social-media-platform-g76x.vercel.app/api/v1/post/addPost",
         formData,
         {
           headers: {

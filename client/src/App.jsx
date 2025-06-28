@@ -82,12 +82,15 @@ function App() {
   const dispatch = useDispatch();
   useEffect(() => {
     if (user) {
-      const socketio = io("http://localhost:5000", {
-        query: {
-          userId: user?._id,
-        },
-        transports: ["websocket"],
-      });
+      const socketio = io(
+        "https://netly-social-media-platform-g76x.vercel.app",
+        {
+          query: {
+            userId: user?._id,
+          },
+          transports: ["websocket"],
+        }
+      );
       dispatch(setSocket(socketio));
 
       // listen all the events

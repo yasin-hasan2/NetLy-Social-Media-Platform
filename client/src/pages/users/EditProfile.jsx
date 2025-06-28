@@ -51,7 +51,7 @@ const EditProfile = () => {
     try {
       setLoading(true);
       const res = await axios.post(
-        "http://localhost:5000/api/v1/user/profile/edit",
+        "https://netly-social-media-platform-g76x.vercel.app/api/v1/user/profile/edit",
         formData,
         {
           headers: {

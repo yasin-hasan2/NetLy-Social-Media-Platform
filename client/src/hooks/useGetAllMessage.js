@@ -11,7 +11,7 @@ const useGetAllMessage = () => {
     const fetchAllMessage = async () => {
       try {
         const res = await axios.get(
-          `http://localhost:5000/api/v1/message/all/${selectedUser?._id}`,
+          `https://netly-social-media-platform-g76x.vercel.app/api/v1/message/all/${selectedUser?._id}`,
           {
             withCredentials: true,
           }

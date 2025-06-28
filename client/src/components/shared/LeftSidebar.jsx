@@ -38,9 +38,12 @@ const LeftSidebar = () => {
 
   const logOutHandler = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/api/v1/user/logout", {
-        withCredentials: true,
-      });
+      const res = await axios.get(
+        "https://netly-social-media-platform-g76x.vercel.app/api/v1/user/logout",
+        {
+          withCredentials: true,
+        }
+      );
       if (res.data.success) {
         dispatch(setAuthUser(null));
         dispatch(setSelectedPost(null));
